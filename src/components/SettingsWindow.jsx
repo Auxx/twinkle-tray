@@ -22,6 +22,7 @@ import SafeRender from "./SafeRender";
 import DefaultIcon from "../assets/tray-icons/dark/icon@4x.png"
 import MDL2Icon from "../assets/tray-icons/dark/mdl2@4x.png"
 import FluentIcon from "../assets/tray-icons/dark/fluent@4x.png"
+import MonitorProfiles from './MonitorProfiles';
 
 function vcpStr(code) {
     return `0x${parseInt(code).toString(16).toUpperCase()}`
@@ -172,7 +173,7 @@ export default class SettingsWindow extends PureComponent {
     componentDidMount() {
         window.addEventListener("monitorsUpdated", this.recievedMonitors)
         window.addEventListener("settingsUpdated", this.recievedSettings)
-        window.addEventListener("localizationUpdated", (e) => { this.setState({ languages: e.detail.languages });  T.setLocalizationData(e.detail.desired, e.detail.default)}); 
+        window.addEventListener("localizationUpdated", (e) => { this.setState({ languages: e.detail.languages });  T.setLocalizationData(e.detail.desired, e.detail.default)});
         window.addEventListener("windowHistory", e => this.setState({ windowHistory: e.detail }))
 
         if (window.isAppX === false) {
@@ -345,6 +346,11 @@ export default class SettingsWindow extends PureComponent {
                 id: "monitors",
                 label: T.t("SETTINGS_SIDEBAR_MONITORS"),
                 icon: "&#xE7F4;"
+            },
+            {
+                id: "profiles",
+                label: T.t("SETTINGS_SIDEBAR_PROFILES"),
+                icon: "&#xE9F9;"
             },
             {
                 id: "features",
@@ -777,6 +783,27 @@ export default class SettingsWindow extends PureComponent {
         }
     }
 
+    getProfilesMonitors = () => {
+        try {
+            if (this.state.monitors == undefined || Object.keys(this.state.monitors).length == 0) {
+                return (<div className="no-displays-message">{T.t("GENERIC_NO_COMPATIBLE_DISPLAYS")}<br /><br /></div>)
+            } else {
+                // console.log(JSON.stringify(this.state.monitors, null, 2));
+
+                return Object.values(this.state.monitors).map((monitor, index) => {
+                    const features = this.state?.rawSettings.monitorFeatures[monitor.hwid[1]]
+                    return (
+                      <MonitorProfiles key={monitor.key}
+                                       monitor={monitor} />
+                    )
+
+                })
+            }
+        } catch (e) {
+
+        }
+    }
+
     getFeaturesMonitors = () => {
         try {
             const onChange = () => {
@@ -1082,7 +1109,7 @@ export default class SettingsWindow extends PureComponent {
                                 <div className="pageSection">
 
                                     <div className="sectionTitle">{T.t("SETTINGS_GENERAL_TITLE")}</div>
-                                    
+
                                     <SettingsOption title={T.t("SETTINGS_GENERAL_STARTUP")} input={this.renderToggle("openAtLogin")} />
 
                                     <SettingsOption title={T.t("SETTINGS_GENERAL_BRIGHTNESS_STARTUP_TITLE")} description={T.t("SETTINGS_GENERAL_BRIGHTNESS_STARTUP_DESC")} input={this.renderToggle("brightnessAtStartup")} />
@@ -1318,12 +1345,18 @@ export default class SettingsWindow extends PureComponent {
                                         </select>
                                     }>
                                         <SettingsChild description={<>⚠️ <em>{T.t("SETTINGS_FEATURES_POWER_WARNING")}</em></>} />
-                                    </SettingsOption>                                
+                                    </SettingsOption>
                                 </div>
                             </SettingsPage>
 
 
-
+                            <SettingsPage current={this.state.activePage} id="profiles">
+                              <div className="pageSection">
+                                <div className="sectionTitle">{T.t("SETTINGS_SIDEBAR_PROFILES")}</div>
+                                <p>{T.t("SETTINGS_PROFILES_DESCRIPTION")}</p>
+                                {this.getProfilesMonitors()}
+                              </div>
+                            </SettingsPage>
 
 
                             <SettingsPage current={this.state.activePage} id="hotkeys">
@@ -1385,7 +1418,7 @@ export default class SettingsWindow extends PureComponent {
                                     </SettingsOption>
                                     <p></p>
 
-                                    
+
                                 </div>
 
                                 <div className="pageSection">
@@ -1430,7 +1463,7 @@ export default class SettingsWindow extends PureComponent {
                             </SettingsPage>
 
                             <SettingsPage current={this.state.activePage} id="debug">
-    
+
 
                                 <div className="pageSection debug">
                                     <SettingsOption title="All Displays" expandable={true} forceExpandable={true} input={<><a className="button" onClick={() => { window.requestMonitors(true) }}>Refresh Monitors</a> <a className="button" onClick={() => window.ipc.send('flush-vcp-cache')}>Clear Cache</a></>}>
@@ -1438,25 +1471,25 @@ export default class SettingsWindow extends PureComponent {
                                             {this.getDebugMonitors()}
                                         </SettingsChild>
                                     </SettingsOption>
-                                    
+
                                     <SettingsOption title="Save Report" description={"Save a text file with information about your monitors and settings for debugging."} input={<><a className="button" onClick={() => window.ipc.send('save-report')}>Generate Report</a></>} />
 
                                     <SettingsOption title="Settings" description={window.settingsPath} input={<a className="button" onClick={() => window.ipc.send('open-settings-file')}>Open Settings</a>} expandable={true} forceExpandable={true}>
                                         <SettingsChild>
                                             <p style={{ whiteSpace: "pre-wrap", fontFamily: '"Cascadia Code", "Consolas", sans-serif' }}>{JSON.stringify(this.state.rawSettings, undefined, 2)}</p>
                                         </SettingsChild>
-                                    </SettingsOption>     
-                                    
+                                    </SettingsOption>
+
                                     <SettingsOption title="Raw Monitor Data" expandable={true} forceExpandable={true}>
                                         <SettingsChild>
                                             <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(window.allMonitors, undefined, 2)}</pre>
                                         </SettingsChild>
-                                    </SettingsOption>                               
+                                    </SettingsOption>
                                 </div>
 
                                 <div className="pageSection debug">
                                     <div className="sectionTitle">Other</div>
-    
+
                                     <SettingsOption title="Dev Mode" input={this.renderToggle("isDev")} />
                                     <SettingsOption title="UDP Server" expandable={true}>
                                         <SettingsChild title="Enable UDP server" input={this.renderToggle("udpEnabled")} />
@@ -1465,7 +1498,7 @@ export default class SettingsWindow extends PureComponent {
                                         <SettingsChild title={`Active port: ${window.settings.udpPortActive}`} />
                                         <SettingsChild title={`UDP key: ${window.settings.udpKey}`} />
                                     </SettingsOption>
-                                    
+
                                     <SettingsOption title="DDC/CI Scanning Mode" description={`Last test result: ${settings?.lastDetectedDDCCIMethod}`} input={
                                         <select value={this.state.rawSettings.preferredDDCCIMethod} onChange={e => {
                                             window.sendSettings({ preferredDDCCIMethod: e.target.value })
@@ -1491,7 +1524,7 @@ export default class SettingsWindow extends PureComponent {
                                     <SettingsOption title="VCP read delay" description="How long (in miliseconds) to delay returning a VCP code value. This can help some displays not return random errors." input={<input type="number" min="0" max="200" value={this.state.rawSettings.checkVCPWaitMS * 1} onChange={(e) => this.setSetting("checkVCPWaitMS", e.target.value)} /> } />
 
                                     <SettingsOption title="Flyout scroll amount" description="How large of steps to take when scrolling over a slider." input={<input type="number" min="1" max="10" value={this.state.rawSettings.scrollFlyoutAmount * 1} onChange={(e) => this.setSetting("scrollFlyoutAmount", e.target.value)} /> } />
-                                    
+
                                     <SettingsOption title="Restart app on wake" input={this.renderToggle("restartOnWake")} />
                                     <SettingsOption title="Disable Auto Refresh" description="Prevent last known brightness from read after certain hardware/user events." input={this.renderToggle("disableAutoRefresh")} />
                                     <SettingsOption title="Use Win32 hardware events" input={this.renderToggle("useWin32Event")} />
@@ -1780,7 +1813,7 @@ function ActionItem(props) {
             { props.onDelete ?
                 <div className=""><a className="button button-primary" onClick={() => props.onDelete?.(action)}>{deleteIcon} <span>{props.title ?? T.t("SETTINGS_HOTKEY_ACTION")}</span></a><br /><br /></div>
             : <div className="option-title">{props.title ?? T.t("SETTINGS_HOTKEY_ACTION")}</div> }
-            
+
             <div className="input-row">
                 <div className="hotkey-monitors-list" style={{ display: (showDisplaysList ? "block" : "none") }}>
                     <div className="input-row">

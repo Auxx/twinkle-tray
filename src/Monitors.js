@@ -284,7 +284,7 @@ getAllMonitors = async (ddcciMethod = "default") => {
     } else {
         console.log("getStudioDisplay() skipped due to previous failure.")
     }
-    
+
 
     // DDC/CI Brightness + Features
     try {
@@ -318,7 +318,7 @@ getAllMonitors = async (ddcciMethod = "default") => {
             } else {
                 brightness = await checkVCP(id, parseInt(brightnessType))
             }
-            
+
             // Force lower max brightness for testing
             if(brightness?.[1]) {
                 if(settings.debugForceBrightnessMax) brightness[1] = settings.debugForceBrightnessMax
@@ -327,7 +327,7 @@ getAllMonitors = async (ddcciMethod = "default") => {
             if(brightness) {
                 ddcciInfo.brightnessValues = brightness
                 features[vcpStr(brightnessType)] = brightness
-            }       
+            }
 
             ddcciInfo.brightnessRaw = ddcciInfo.brightnessValues[0]
             ddcciInfo.brightnessMax = ddcciInfo.brightnessValues[1]
@@ -420,6 +420,7 @@ getAllMonitors = async (ddcciMethod = "default") => {
     try {
         console.log(`Monitors found: ${Object.keys(foundMonitors)}`)
     } catch (e) { }
+
     return foundMonitors
 }
 
@@ -430,7 +431,7 @@ function determineDDCCIMethod() {
     const ddcciMethodValues = ["fast", "accurate", "no-validation", "legacy"]
     if(savedMethod && ddcciMethodValues.indexOf(savedMethod) >= 0) {
         ddcciMethod = savedMethod
-    } 
+    }
     return ddcciMethod
 }
 
@@ -610,7 +611,7 @@ getFeaturesDDC = (ddcciMethod = "accurate") => {
     return new Promise(async (resolve, reject) => {
         try {
             const timeout = setTimeout(() => { console.log("getFeaturesDDC Timed out."); reject({}) }, 80000)
-            
+
             getDDCCI()
             await wait(10)
 
@@ -720,7 +721,7 @@ checkMonitorFeatures = async (monitor, skipCache = false, ddcciMethod = "accurat
                         }
                     }
                 }
-                
+
                 // Capabilities report allows us to skip this for unsupported codes, generally
                 features["0x10"] = await checkVCPIfEnabled(monitor, 0x10, "luminance", skipCache)
                 features["0x13"] = await checkVCPIfEnabled(monitor, 0x13, "brightness", skipCache)
@@ -730,7 +731,7 @@ checkMonitorFeatures = async (monitor, skipCache = false, ddcciMethod = "accurat
             }
 
 
-            
+
         } catch (e) {
             console.log(e)
         }
@@ -946,7 +947,7 @@ async function checkVCPIfEnabled(monitor, code, setting, skipCache = false) {
         const userEnabledFeature = settings?.monitorFeatures?.[hwid[1]]?.[vcpString]
         const isInReport = monitorReports[monitor]?.[vcpString] ? true : false
         const hasReport = monitorReports[monitor] && Object.keys(monitorReports[monitor])?.length > 0 ? true : false
-        
+
         if (hasReport && !isInReport) return false;
 
         // If we previously saw that a feature was supported, we shouldn't have to check again.
@@ -961,7 +962,7 @@ async function checkVCPIfEnabled(monitor, code, setting, skipCache = false) {
         if(vcpCache[monitor]?.["vcp_" + vcpString]) {
             return vcpCache[monitor]["vcp_" + vcpString]
         }
-        
+
         // Cached value can't be used, so we return false
         return false
     }
@@ -973,7 +974,7 @@ async function checkIfVCPSupported(monitor, code) {
     try {
         const isInReport = monitorReports[monitor]?.[vcpString] ? true : false
         const hasReport = monitorReports[monitor] && Object.keys(monitorReports[monitor])?.length > 0 ? true : false
-        
+
         if (hasReport && !isInReport) return false;
 
         // If we previously saw that a feature was supported, we shouldn't have to check again.
@@ -1009,7 +1010,7 @@ async function checkVCP(monitor, code, skipCacheWrite = false) {
         if(vcpCache[monitor]?.["vcp_" + vcpString]) {
             return vcpCache[monitor]["vcp_" + vcpString]
         }
-        
+
         // Cached value can't be used, so we return false
         return false
     }
@@ -1023,7 +1024,7 @@ async function setVCP(monitor, code, value) {
         if (vcpCache[monitor]?.["vcp_" + vcpString]) {
             vcpCache[monitor]["vcp_" + vcpString][0] = (value * 1)
         }
-        
+
         const hwid = monitor.split("#")
         if(monitors[hwid[2]]?.features?.[vcpString]) {
             monitors[hwid[2]].features[vcpString][0] = parseInt(value)
@@ -1034,7 +1035,7 @@ async function setVCP(monitor, code, value) {
     }
 }
 
-async function getHighLevelBrightness(monitor) {   
+async function getHighLevelBrightness(monitor) {
     try {
         let result = ddcci._getHighLevelBrightness(monitor)
         return result
@@ -1045,7 +1046,7 @@ async function getHighLevelBrightness(monitor) {
 }
 
 async function setHighLevelBrightness(monitor, value) {
-    if(busyLevel > 0) while(busyLevel > 0) { await wait(100) } // Wait until no longer busy   
+    if(busyLevel > 0) while(busyLevel > 0) { await wait(100) } // Wait until no longer busy
     try {
         let result = ddcci._setHighLevelBrightness(monitor, value)
         return result
@@ -1280,7 +1281,7 @@ testDDCCIMethods = async () => {
 
         console.log("Testing DDC/CI methods...")
         getDDCCI()
-    
+
         let startTime = process.hrtime.bigint()
         const accurateResults = ddcci.getAllMonitors("accurate", false)
         const accurateIDs = []
@@ -1292,13 +1293,13 @@ testDDCCIMethods = async () => {
             }
         }
         const endTimeAcc = (startTime - process.hrtime.bigint()) / BigInt(-1000000)
-        
+
         wait(50)
         vcpCache = {}
         monitorReports = {}
         monitorReportsRaw = {}
         ddcci._clearDisplayCache()
-    
+
         startTime = process.hrtime.bigint()
         const fastResults = ddcci.getAllMonitors("fast", false)
         const fastIDs = []
@@ -1310,7 +1311,7 @@ testDDCCIMethods = async () => {
             }
         }
         const endTimeFast = (startTime - process.hrtime.bigint()) / BigInt(-1000000)
-    
+
         fastIsFine = true
         let failReason
         if(fastResults.length !== accurateResults.length) {
@@ -1343,7 +1344,7 @@ testDDCCIMethods = async () => {
     monitorReports = {}
     monitorReportsRaw = {}
     ddcci._clearDisplayCache()
-    
+
     return fastIsFine
 }
 
